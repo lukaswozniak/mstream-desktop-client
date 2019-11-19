@@ -49,7 +49,7 @@ function handleEnteredServerAddress(enteredUrl) {
 }
 
 function askUserForServerAddress() {
-    const value = store.get('serverAddress') || 'https://mstream.example.org';
+    const value = store.get('serverAddress') || 'https://demo.mstream.io';
     prompt({
         title: 'mStream Music',
         label: 'Enter your mStream server address:',
