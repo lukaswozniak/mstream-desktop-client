@@ -6,7 +6,7 @@ let mainWindow;
 const store = new Store();
 
 function disposeMainWindow() {
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.close();
     }
     mainWindow = null;
@@ -25,15 +25,19 @@ function validateHttpResponseCode(httpResponseCode) {
 }
 
 function registerGlobalHotkeys() {
-    electron.globalShortcut.register(
+    electron.globalShortcut.unregisterAll();
+    const playPauseSuccess = electron.globalShortcut.register(
         'MediaPlayPause',
         () => { mainWindow.webContents.executeJavaScript('$("#play-pause-button").click()'); });
-    electron.globalShortcut.register(
+    const previousSuccess = electron.globalShortcut.register(
         'MediaPreviousTrack',
         () => { mainWindow.webContents.executeJavaScript('$("#previous-button").click()'); });
-    electron.globalShortcut.register(
+    const nextSuccess = electron.globalShortcut.register(
         'MediaNextTrack',
         () => { mainWindow.webContents.executeJavaScript('$("#next-button").click()'); });
+    if (! (playPauseSuccess && previousSuccess && nextSuccess)) {
+        electron.dialog.showErrorBox('Error', 'Failed to register some of keyboard media controls');
+    }
 }
 
 function handleEnteredServerAddress(enteredUrl) {
@@ -75,3 +79,4 @@ function createWindow() {
 
 electron.Menu.setApplicationMenu(null);
 electron.app.on('ready', createWindow);
+electron.app.on('will-quit', () => { electron.globalShortcut.unregisterAll(); });
