@@ -14,4 +14,4 @@ npm start
 On start you will be asked to enter your mstream server url, the app should load after entering.
 
 ### Features
-The app should work exactly like loading the web app in browser. The main advantage of desktop client is support for global media/function keyboard global shortcuts.
+The app should work exactly like loading the web app in browser. The main advantage of desktop client is support for global media/function keyboard shortcuts.
