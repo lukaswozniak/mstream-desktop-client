@@ -9,8 +9,7 @@ let mpris;
 const store = new Store();
 
 function clickButtonInWebApp(buttonId) {
-    console.log(buttonId);
-    mainWindow.webContents.executeJavaScript('$("' + buttonId + '").click()');
+    mainWindow.webContents.send('perform-click', buttonId);
 }
 
 function createClickButtonInWebAppCallback(buttonId) {
@@ -44,7 +43,6 @@ function initializeMpris() {
         supportedMimeTypes: ['audio/mpeg', 'application/ogg'],
         supportedInterfaces: ['player']
     });
-    //mpris.playbackStatus = mpris.PLAYBACK_STATUS_PAUSED;
     mpris.on('playpause', createClickButtonInWebAppCallback('#play-pause-button'));
     mpris.on('play', createClickButtonInWebAppCallback('#play-pause-button'));
     mpris.on('pause', createClickButtonInWebAppCallback('#play-pause-button'));
@@ -52,18 +50,16 @@ function initializeMpris() {
     mpris.on('previous', createClickButtonInWebAppCallback('#previous-button'));
     mpris.on('next', createClickButtonInWebAppCallback('#next-button'));
 
-    // mpris.on('play', () => console.log('play'))
-    // mpris.on('seek', () => console.log('seek'))
-    // mpris.on('raise', () => console.log('raise'))
-    // mpris.on('position', () => console.log('position'))
-    // mpris.on('open', () => console.log('open'))
-    // mpris.on('volume', () => console.log('volume'))
-    // mpris.on('loopStatus', () => console.log('loopStatus'))
-    // mpris.on('shuffle', () => console.log('shuffle'))
+    mpris.on('play', () => console.log('play'))
+    mpris.on('seek', () => console.log('seek'))
+    mpris.on('raise', () => console.log('raise'))
+    mpris.on('position', () => console.log('position'))
+    mpris.on('open', () => console.log('open'))
+    mpris.on('volume', () => console.log('volume'))
+    mpris.on('loopStatus', () => console.log('loopStatus'))
+    mpris.on('shuffle', () => console.log('shuffle'))
 
     electron.ipcMain.on('set-is-playing', (event, isPlaying) => {
-        console.log(isPlaying);
-        console.log(isPlaying ? MprisService.PLAYBACK_STATUS_PLAYING : MprisService.PLAYBACK_STATUS_PAUSED)
         mpris.playbackStatus = isPlaying ? MprisService.PLAYBACK_STATUS_PLAYING : MprisService.PLAYBACK_STATUS_PAUSED;
         mpris.seeked(0);
     })

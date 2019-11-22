@@ -8,4 +8,8 @@ window.addEventListener('DOMContentLoaded', () => {
     $('body').on('DOMSubtreeModified', '#title-text', () => {
         electron.ipcRenderer.send('set-current-song-metadata', MSTREAMPLAYER.playerStats.metadata, MSTREAMAPI.currentServer.token);
     });
+
+    electron.ipcRenderer.on('perform-click', (event, buttonId) => {
+        $(buttonId).click();
+    })
 });
