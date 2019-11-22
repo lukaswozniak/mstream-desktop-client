@@ -56,10 +56,10 @@ function initializeMpris() {
         const percentage = position/mpris.metadata['mpris:length'] * 100;
         mainWindow.webContents.send('set-current-song-position-percentage', percentage);
     });
+    mpris.on('volume', (volume) => mainWindow.webContents.send('set-volume', volume*100));
 
     mpris.on('seek', () => console.log('seek'))
     mpris.on('open', () => console.log('open'))
-    mpris.on('volume', () => console.log('volume'))
     mpris.on('loopStatus', () => console.log('loopStatus'))
     mpris.on('shuffle', () => console.log('shuffle'))
 
@@ -85,6 +85,10 @@ function initializeMpris() {
         };
         mpris.getPosition = () => Math.round(currentTime * 1000 * 1000);
     });
+
+    electron.ipcMain.on('set-volume', (event, volume) => {
+        mpris.volume = volume/100;
+    });
 }
 
 function registerGlobalHotkeys() {
@@ -109,7 +113,7 @@ function handleEnteredServerAddress(enteredUrl) {
     if (enteredUrl) {
         store.set('serverAddress', enteredUrl);
         mainWindow.loadURL(enteredUrl)
-            .then(() => { mainWindow.show(); integratePlayerWithSystemControls(); })
+            .then(() => { mainWindow.show(); })
             .catch(handleUnexpectedError);
         mainWindow.webContents.once('did-navigate', (event, url, code) => { validateHttpResponseCode(code); });
     } else { // cancelled by user
@@ -135,10 +139,12 @@ function createWindow() {
     mainWindow = new electron.BrowserWindow({
         width: 800,
         height: 600,
-        show: false,
+        // show: false,
         webPreferences: { preload: path.join(__dirname, 'preload.js') }
     });
+    mainWindow.hide();
     mainWindow.on('closed', () => { mainWindow = null; });
+    integratePlayerWithSystemControls();
 
     askUserForServerAddress();
 }
