@@ -52,9 +52,12 @@ function initializeMpris() {
     mpris.on('stop', createClickButtonInWebAppCallback('#play-pause-button'));
     mpris.on('previous', createClickButtonInWebAppCallback('#previous-button'));
     mpris.on('next', createClickButtonInWebAppCallback('#next-button'));
+    mpris.on('position', ({trackId, position}) => {
+        const percentage = position/mpris.metadata['mpris:length'] * 100;
+        mainWindow.webContents.send('set-current-song-position-percentage', percentage);
+    });
 
     mpris.on('seek', () => console.log('seek'))
-    mpris.on('position', () => console.log('position'))
     mpris.on('open', () => console.log('open'))
     mpris.on('volume', () => console.log('volume'))
     mpris.on('loopStatus', () => console.log('loopStatus'))
@@ -68,12 +71,19 @@ function initializeMpris() {
     electron.ipcMain.on('set-current-song-metadata', (event, metadata, token) => {
         mpris.metadata = {
             'mpris:trackid': mpris.objectPath('track/' + metadata.track),
-            //'mpris:length': duration * 1000 * 1000, // In microseconds
             'mpris:artUrl': store.get('serverAddress') + '/album-art/' + metadata['album-art'] + '?token=' + token,
             'xesam:title': metadata.title,
             'xesam:album': metadata.album,
             'xesam:artist': [metadata.artist]
         };
+    });
+
+    electron.ipcMain.on('set-current-song-play-time', (event, currentTime, duration) => {
+        mpris.metadata = {
+            ...mpris.metadata,
+            'mpris:length': Math.round(duration * 1000 * 1000)
+        };
+        mpris.getPosition = () => Math.round(currentTime * 1000 * 1000);
     });
 }
 
