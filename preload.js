@@ -1,9 +1,11 @@
 const electron = require('electron');
 
 let mstreamPlayer;
+let speedBar;
 
 window.addEventListener('DOMContentLoaded', () => {
     mstreamPlayer = document.querySelector('#mstream-player');
+    speedBar = document.querySelector('#speed-bar');
 
     new MutationObserver(() => {
         electron.ipcRenderer.send('set-is-playing', MSTREAMPLAYER.playerStats.playing);
@@ -24,8 +26,20 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     electron.ipcRenderer.send('set-volume', MSTREAMPLAYER.playerStats.volume);
-    document.querySelector('.volume-slider').oninput = () => {
+    const volumeSlider = document.querySelector('.volume-slider');
+    volumeSlider.oninput = () => {
         electron.ipcRenderer.send('set-volume', MSTREAMPLAYER.playerStats.volume);
+    };
+    volumeSlider.onchange = () => {
+        electron.ipcRenderer.send('set-volume', MSTREAMPLAYER.playerStats.volume);
+    };
+
+    electron.ipcRenderer.send('set-rate', MSTREAMPLAYER.playerStats.playbackRate);
+    speedBar.children[0].oninput = () => {
+        electron.ipcRenderer.send('set-rate', MSTREAMPLAYER.playerStats.playbackRate);
+    };
+    speedBar.children[0].onchange = () => {
+        electron.ipcRenderer.send('set-rate', MSTREAMPLAYER.playerStats.playbackRate);
     };
 
     electron.ipcRenderer.on('perform-click', (event, buttonId) => {
@@ -38,5 +52,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     electron.ipcRenderer.on('set-volume', (event, volume) => {
         mstreamPlayer.__vue__.curVol = volume;
+        electron.ipcRenderer.send('set-volume', volume);
+    });
+
+    electron.ipcRenderer.on('set-rate', (event, rate) => {
+        speedBar.__vue__.curSpeed = rate;
+        electron.ipcRenderer.send('set-rate', rate);
     });
 });

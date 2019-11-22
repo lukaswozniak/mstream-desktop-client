@@ -37,12 +37,16 @@ function validateHttpResponseCode(httpResponseCode) {
 
 function initializeMpris() {
     mpris = MprisService({
-        name: 'electron',
+        name: 'mstream',
         identity: 'mStream Music',
         supportedUriSchemes: ['file'],
         supportedMimeTypes: ['audio/mpeg', 'application/ogg'],
         supportedInterfaces: ['player']
     });
+    mpris.minimumRate = 0.5;
+    mpris.maximumRate = 3.5;
+    mpris.playbackStatus = MprisService.PLAYBACK_STATUS_PLAYING;
+    mpris.playbackStatus = MprisService.PLAYBACK_STATUS_PAUSED;
     mpris.on('raise', () => { mainWindow.show(); });
     mpris.on('quit', () => { mainWindow.close(); });
 
@@ -57,6 +61,7 @@ function initializeMpris() {
         mainWindow.webContents.send('set-current-song-position-percentage', percentage);
     });
     mpris.on('volume', (volume) => mainWindow.webContents.send('set-volume', volume*100));
+    mpris.on('rate', (rate) => mainWindow.webContents.send('set-rate', rate));
 
     mpris.on('seek', () => console.log('seek'))
     mpris.on('open', () => console.log('open'))
@@ -66,7 +71,7 @@ function initializeMpris() {
     electron.ipcMain.on('set-is-playing', (event, isPlaying) => {
         mpris.playbackStatus = isPlaying ? MprisService.PLAYBACK_STATUS_PLAYING : MprisService.PLAYBACK_STATUS_PAUSED;
         mpris.seeked(0);
-    })
+    });
 
     electron.ipcMain.on('set-current-song-metadata', (event, metadata, token) => {
         mpris.metadata = {
@@ -88,6 +93,10 @@ function initializeMpris() {
 
     electron.ipcMain.on('set-volume', (event, volume) => {
         mpris.volume = volume/100;
+    });
+
+    electron.ipcMain.on('set-rate', (event, rate) => {
+        mpris.rate = rate;
     });
 }
 
