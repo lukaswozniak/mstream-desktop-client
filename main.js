@@ -148,7 +148,7 @@ function createWindow() {
     mainWindow = new electron.BrowserWindow({
         width: 800,
         height: 600,
-        // show: false,
+        show: false,
         webPreferences: { preload: path.join(__dirname, 'preload.js') }
     });
     mainWindow.hide();
@@ -159,5 +159,6 @@ function createWindow() {
 }
 
 electron.Menu.setApplicationMenu(null);
+electron.app.commandLine.appendSwitch('disable-features', 'MediaSessionService');
 electron.app.on('ready', createWindow);
 electron.app.on('will-quit', () => { electron.globalShortcut.unregisterAll(); });
