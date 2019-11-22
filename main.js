@@ -49,10 +49,10 @@ function initializeMpris() {
     mpris.on('stop', createClickButtonInWebAppCallback('#play-pause-button'));
     mpris.on('previous', createClickButtonInWebAppCallback('#previous-button'));
     mpris.on('next', createClickButtonInWebAppCallback('#next-button'));
+    mpris.on('raise', () => { mainWindow.show(); });
 
     mpris.on('play', () => console.log('play'))
     mpris.on('seek', () => console.log('seek'))
-    mpris.on('raise', () => console.log('raise'))
     mpris.on('position', () => console.log('position'))
     mpris.on('open', () => console.log('open'))
     mpris.on('volume', () => console.log('volume'))
