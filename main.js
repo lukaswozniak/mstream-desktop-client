@@ -138,7 +138,8 @@ function askUserForServerAddress() {
         value: value,
         inputAttrs: { type: 'url' },
         type: 'input',
-        autoHideMenuBar: true
+        autoHideMenuBar: true,
+        icon: path.join(__dirname, 'icon/mstream-logo-cut.png')
     }, mainWindow)
         .then(handleEnteredServerAddress)
         .catch(handleUnexpectedError);
@@ -149,6 +150,7 @@ function createWindow() {
         width: 800,
         height: 600,
         show: false,
+        icon: path.join(__dirname, 'icon/mstream-logo-cut.png'),
         webPreferences: { preload: path.join(__dirname, 'preload.js') }
     });
     mainWindow.hide();
