@@ -2,10 +2,8 @@ const path = require('path');
 const electron = require('electron');
 const prompt = require('electron-prompt');
 const Store = require('electron-store');
-const MprisService = require('mpris-service');
 
 let mainWindow;
-let mpris;
 const store = new Store();
 
 function clickButtonInWebApp(buttonId) {
@@ -35,72 +33,89 @@ function validateHttpResponseCode(httpResponseCode) {
     }
 }
 
-function initializeMpris() {
-    mpris = MprisService({
-        name: 'mstream',
-        identity: 'mStream Music',
-        supportedUriSchemes: ['file'],
-        supportedMimeTypes: ['audio/mpeg', 'application/ogg'],
-        supportedInterfaces: ['player']
-    });
-    mpris.minimumRate = 0.5;
-    mpris.maximumRate = 3.5;
-    mpris.playbackStatus = MprisService.PLAYBACK_STATUS_PLAYING;
-    mpris.playbackStatus = MprisService.PLAYBACK_STATUS_PAUSED;
-    mpris.on('raise', () => { mainWindow.show(); });
-    mpris.on('quit', () => { mainWindow.close(); });
+let mpris;
+function integrateControlsOnLinux() {
+    try {
+        const MprisService = require('mpris-service');
+        mpris = MprisService({
+            name: 'mstream',
+            identity: 'mStream Music',
+            supportedUriSchemes: ['file'],
+            supportedMimeTypes: ['audio/mpeg', 'application/ogg'],
+            supportedInterfaces: ['player']
+        });
+        mpris.minimumRate = 0.5;
+        mpris.maximumRate = 3.5;
+        mpris.playbackStatus = MprisService.PLAYBACK_STATUS_PLAYING;
+        mpris.playbackStatus = MprisService.PLAYBACK_STATUS_PAUSED;
+        mpris.on('raise', () => { mainWindow.show(); });
+        mpris.on('quit', () => { mainWindow.close(); });
 
-    mpris.on('playpause', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('play', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('pause', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('stop', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('previous', createClickButtonInWebAppCallback('#previous-button'));
-    mpris.on('next', createClickButtonInWebAppCallback('#next-button'));
-    mpris.on('position', ({trackId, position}) => {
-        const percentage = position/mpris.metadata['mpris:length'] * 100;
-        mainWindow.webContents.send('set-current-song-position-percentage', percentage);
-    });
-    mpris.on('volume', (volume) => mainWindow.webContents.send('set-volume', volume*100));
-    mpris.on('rate', (rate) => mainWindow.webContents.send('set-rate', rate));
+        mpris.on('playpause', createClickButtonInWebAppCallback('#play-pause-button'));
+        mpris.on('play', createClickButtonInWebAppCallback('#play-pause-button'));
+        mpris.on('pause', createClickButtonInWebAppCallback('#play-pause-button'));
+        mpris.on('stop', createClickButtonInWebAppCallback('#play-pause-button'));
+        mpris.on('previous', createClickButtonInWebAppCallback('#previous-button'));
+        mpris.on('next', createClickButtonInWebAppCallback('#next-button'));
+        mpris.on('position', ({trackId, position}) => {
+            const percentage = position/mpris.metadata['mpris:length'] * 100;
+            mainWindow.webContents.send('set-current-song-position-percentage', percentage);
+        });
+        mpris.on('volume', (volume) => mainWindow.webContents.send('set-volume', volume*100));
+        mpris.on('rate', (rate) => mainWindow.webContents.send('set-rate', rate));
 
-    mpris.on('seek', () => console.log('seek'))
-    mpris.on('open', () => console.log('open'))
-    mpris.on('loopStatus', () => console.log('loopStatus'))
-    mpris.on('shuffle', () => console.log('shuffle'))
+        mpris.on('seek', () => console.log('seek'))
+        mpris.on('open', () => console.log('open'))
+        mpris.on('loopStatus', () => console.log('loopStatus'))
+        mpris.on('shuffle', () => console.log('shuffle'))
 
-    electron.ipcMain.on('set-is-playing', (event, isPlaying) => {
-        mpris.playbackStatus = isPlaying ? MprisService.PLAYBACK_STATUS_PLAYING : MprisService.PLAYBACK_STATUS_PAUSED;
-        mpris.seeked(0);
-    });
+        electron.ipcMain.on('set-is-playing', (event, isPlaying) => {
+            mpris.playbackStatus = isPlaying ? MprisService.PLAYBACK_STATUS_PLAYING : MprisService.PLAYBACK_STATUS_PAUSED;
+            mpris.seeked(0);
+        });
 
-    electron.ipcMain.on('set-current-song-metadata', (event, metadata, token) => {
-        mpris.metadata = {
-            'mpris:trackid': mpris.objectPath('track/' + metadata.track),
-            'mpris:artUrl': store.get('serverAddress') + '/album-art/' + metadata['album-art'] + '?token=' + token,
-            'xesam:title': metadata.title,
-            'xesam:album': metadata.album,
-            'xesam:artist': [metadata.artist]
-        };
-    });
+        electron.ipcMain.on('set-current-song-metadata', (event, metadata, token) => {
+            mpris.metadata = {
+                'mpris:trackid': mpris.objectPath('track/' + metadata.track),
+                'mpris:artUrl': store.get('serverAddress') + '/album-art/' + metadata['album-art'] + '?token=' + token,
+                'xesam:title': metadata.title,
+                'xesam:album': metadata.album,
+                'xesam:artist': [metadata.artist]
+            };
+        });
 
-    electron.ipcMain.on('set-current-song-play-time', (event, currentTime, duration) => {
-        mpris.metadata = {
-            ...mpris.metadata,
-            'mpris:length': Math.round(duration * 1000 * 1000)
-        };
-        mpris.getPosition = () => Math.round(currentTime * 1000 * 1000);
-    });
+        electron.ipcMain.on('set-current-song-play-time', (event, currentTime, duration) => {
+            mpris.metadata = {
+                ...mpris.metadata,
+                'mpris:length': Math.round(duration * 1000 * 1000)
+            };
+            mpris.getPosition = () => Math.round(currentTime * 1000 * 1000);
+        });
 
-    electron.ipcMain.on('set-volume', (event, volume) => {
-        mpris.volume = volume/100;
-    });
+        electron.ipcMain.on('set-volume', (event, volume) => {
+            mpris.volume = volume/100;
+        });
 
-    electron.ipcMain.on('set-rate', (event, rate) => {
-        mpris.rate = rate;
-    });
+        electron.ipcMain.on('set-rate', (event, rate) => {
+            mpris.rate = rate;
+        });
+    } catch (e) {
+        electron.dialog.showErrorBox('Error', 'Failed to use MPRIS APIs, integrating controls using global hotkeys');
+        integrateControlsUsingGlobalHotkeys();
+    }
 }
 
-function registerGlobalHotkeys() {
+function integrateControlsOnWindows() {
+    try {
+        integrateControlsUsingGlobalHotkeys();
+        const { MediaPlayer } = require('@nodert-win10-rs4/windows.media');
+    } catch (e) {
+        electron.dialog.showErrorBox('Error', 'Failed to use NodeRT APIs, integrating controls using global hotkeys');
+        integrateControlsUsingGlobalHotkeys();
+    }
+}
+
+function integrateControlsUsingGlobalHotkeys() {
     electron.globalShortcut.unregisterAll();
     const playPauseSuccess = electron.globalShortcut.register('MediaPlayPause', createClickButtonInWebAppCallback("#play-pause-button"));
     const previousSuccess = electron.globalShortcut.register('MediaPreviousTrack', createClickButtonInWebAppCallback("#previous-button"));
@@ -112,9 +127,11 @@ function registerGlobalHotkeys() {
 
 function integratePlayerWithSystemControls() {
     if (process.platform == 'linux') {
-        initializeMpris();
+        integrateControlsOnLinux();
+    } else if (process.platform == 'win32') {
+        integrateControlsOnWindows();
     } else {
-        registerGlobalHotkeys();
+        integrateControlsUsingGlobalHotkeys();
     }
 }
 
