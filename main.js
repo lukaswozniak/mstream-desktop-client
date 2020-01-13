@@ -50,12 +50,12 @@ function initializeMpris() {
     mpris.on('raise', () => { mainWindow.show(); });
     mpris.on('quit', () => { mainWindow.close(); });
 
-    mpris.on('playpause', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('play', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('pause', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('stop', createClickButtonInWebAppCallback('#play-pause-button'));
-    mpris.on('previous', createClickButtonInWebAppCallback('#previous-button'));
-    mpris.on('next', createClickButtonInWebAppCallback('#next-button'));
+    mpris.on('playpause', () => clickButtonInWebApp('#play-pause-button'));
+    mpris.on('play', () => mpris.playbackStatus === MprisService.PLAYBACK_STATUS_PAUSED && clickButtonInWebApp('#play-pause-button'));
+    mpris.on('pause', () => mpris.playbackStatus === MprisService.PLAYBACK_STATUS_PLAYING && clickButtonInWebApp('#play-pause-button'));
+    mpris.on('stop', () => mpris.playbackStatus === MprisService.PLAYBACK_STATUS_PLAYING && clickButtonInWebApp('#play-pause-button'));
+    mpris.on('previous', () => clickButtonInWebApp('#previous-button'));
+    mpris.on('next', () => clickButtonInWebApp('#next-button'));
     mpris.on('position', ({trackId, position}) => {
         const percentage = position/mpris.metadata['mpris:length'] * 100;
         mainWindow.webContents.send('set-current-song-position-percentage', percentage);
